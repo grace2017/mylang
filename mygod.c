@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "god.h"
+#include "mygod.h"
 
 PExpression
 create_int_expr(int val)

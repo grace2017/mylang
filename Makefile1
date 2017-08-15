@@ -1,0 +1,11 @@
+#不生成抽象语法树
+TARGET:=mylang_no_tree
+CC:=gcc
+CFLAGS:=-g
+CFLAGS+=-o
+
+$(TARGET): ci.c yu.c main.c
+	$(CC) $(CFLAGS) $(TARGET) $^
+
+clean:
+	rm -rf $(TARGET)

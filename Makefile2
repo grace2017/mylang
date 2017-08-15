@@ -1,0 +1,12 @@
+#生成抽象语法树
+
+TARGET:=mylang_tree
+CC:=gcc
+CFLAGS:=-g
+CFLAGS+=-o
+
+$(TARGET): ci.c yu_tree.c main.c mygod.c
+	$(CC) $(CFLAGS) $(TARGET) $^
+
+clean:
+	rm -rf $(TARGET)

@@ -23,7 +23,7 @@ static char *tokenTypeStr[] = {
 	"右小括号"
 };
 
-static int parse_expr();
+static PExpression parse_expr();
 
 static
 void
@@ -53,11 +53,11 @@ unget_token(PToken p)
 }
 
 static
-int
+PExpression
 parse_primary_expr()
 {
 	Token token = {0};
-	int result = 0;
+	PExpression expr_p = NULL;
 
 	get_token(&token);
 	if(T_LINE_END == token.type) {
@@ -69,7 +69,7 @@ parse_primary_expr()
 
 		exit(1);
 	} else if(T_LP == token.type) {
-		result = parse_expr();		
+		expr_p = parse_expr();		
 
 		get_token(&token);
 		if(T_RP != token.type) {
@@ -78,35 +78,35 @@ parse_primary_expr()
 			exit(0);
 		}
 	} else {
-		result = token.int_val;
+		expr_p = create_int_expr(token.int_val);
 	}
 
-	return result;
+	return expr_p;
 }
 
 static
-int 
+PExpression 
 parse_twice_expr()
 {
 	Token token = {0};
-        int v1 = 0;
-        int v2 = 0;
+        PExpression expr_p1 = NULL;
+        PExpression expr_p2 = 0;
 
-        v1 = parse_primary_expr();
+        expr_p1 = parse_primary_expr();
         while(1) {
                 get_token(&token);
                 if(T_MUL == token.type) {
-                        v2 = parse_primary_expr();
+                        expr_p2 = parse_primary_expr();
 
-                        v1 *= v2;
+			expr_p1 = create_operation_expression(T_MUL, expr_p1, expr_p2);
                 } else if(T_DIV == token.type) {
-			v2 = parse_primary_expr();
+                        expr_p2 = parse_primary_expr();
 
-                        v1 /= v2;
+			expr_p1 = create_operation_expression(T_DIV, expr_p1, expr_p2);
 		} else if(T_MOD == token.type) {
-			v2 = parse_primary_expr();
+                        expr_p2 = parse_primary_expr();
 
-                        v1 %= v2;
+			expr_p1 = create_operation_expression(T_MOD, expr_p1, expr_p2);
 		} else {
 			unget_token(&token);
 
@@ -114,28 +114,28 @@ parse_twice_expr()
                 }
         } /* end while */
 
-        return v1;
+        return expr_p1;
 }
 
 static
-int
+PExpression
 parse_expr()
 {
 	Token token = {0};
-	int v1 = 0;
-	int v2 = 0;
+	PExpression expr_p1 = 0;
+	PExpression expr_p2 = 0;
 
-	v1 = parse_twice_expr();
+	expr_p1 = parse_twice_expr();
 	while(1) {
 		get_token(&token);
 	        if(T_ADD == token.type) {
-        	        v2 = parse_twice_expr();
+        	        expr_p2 = parse_twice_expr();
 
-			v1 += v2;
+			expr_p1 = create_operation_expression(T_ADD, expr_p1, expr_p2);
         	} else if(T_SUB == token.type) {
-                	v2 = parse_twice_expr();
+        	        expr_p2 = parse_twice_expr();
 
-                	v1 -= v2;
+			expr_p1 = create_operation_expression(T_SUB, expr_p1, expr_p2);
 		} else {
 			unget_token(&token);
 
@@ -143,7 +143,7 @@ parse_expr()
 		}	
 	} /* end while */
 
-	return v1;
+	return expr_p1;
 }
 
 /*
@@ -169,6 +169,7 @@ parse_line()
 void
 YU_parse_line(char *buff)
 {
+	PExpression expr_p = NULL;
 	int result = 0;
 
 	CI_set_line(buff);	
@@ -179,7 +180,14 @@ YU_parse_line(char *buff)
 #ifdef __DEBUG
 	parse_line();
 #else
-	result = parse_expr();
-	printf("结果：%d \n", result);
+	expr_p = parse_expr();
+
+	print_expr_tree(expr_p);
+
+	run_expr_tree(expr_p, &result);
+	
+	free(expr_p);
+
+	printf(" = %d \n", result);
 #endif
 }
